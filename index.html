@@ -1,0 +1,12 @@
+<html>
+<body>
+  <img id="img" src="status.png?ts=0" style="max-width:100%;">
+  <script>
+    setInterval(() => {
+      const img = document.getElementById('img');
+      const ts = Date.now();
+      img.src = 'status.png?ts=' + ts; // omija cache, odświeża obraz
+    }, 5000); // zmień 5000 na dowolny interwał w ms
+  </script>
+</body>
+</html>
