@@ -1,29 +1,199 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Status urządzenia</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Status + Pogoda</title>
   <style>
-    body { font-family: sans-serif; text-align: center; background: #222; color: #eee; }
-    img { max-width: 90vw; max-height: 90vh; border: 1px solid #555; margin-top: 20px; }
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #0b1220;
+      color: #e8eefc;
+      display: grid;
+      place-items: start center;
+    }
+
+    .card {
+      width: min(720px, 100%);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    h1, h2 {
+      margin: 0 0 12px 0;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    h2 { margin-top: 18px; font-size: 18px; opacity: 0.95; }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 12px 0 6px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.10);
+      color: #e8eefc;
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { background: rgba(255,255,255,0.16); }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.95;
+    }
+
+    input[type="number"]{
+      width: 92px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(0,0,0,0.25);
+      color: #e8eefc;
+    }
+
+    .img-wrap {
+      display: grid;
+      gap: 12px;
+      place-items: start center;
+    }
+
+    /* status.png */
+    #statusImg {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.15);
+    }
+
+    /* weather sticker */
+    #weatherSticker {
+      max-width: 100%;
+      height: auto;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.15);
+      display: block;
+    }
+
+    .hint {
+      margin-top: 8px;
+      font-size: 13px;
+      opacity: 0.75;
+      line-height: 1.35;
+    }
   </style>
 </head>
 <body>
-  <h1>Status urządzenia</h1>
-  <p>Obraz odświeża się automatycznie co 1 minutę.</p>
-  <img id="statusImg" src="status.png?ts=0" alt="Status urządzenia">
+  <main class="card">
+    <h1>Status</h1>
+
+    <div class="img-wrap">
+      <img id="statusImg" src="status.png" alt="Status" />
+    </div>
+
+    <h2>Pogoda</h2>
+
+    <!-- Bazuje na Twoim fragmencie: <a href="..."><img src="..."></a> -->
+    <div class="img-wrap">
+      <a id="weatherLink" href="https://app.weathercloud.net/d9916512868" target="_blank" rel="noopener">
+        <img
+          id="weatherSticker"
+          src="https://app.weathercloud.net/device/sticker/9916512868"
+          alt="Pogoda (Weathercloud)"
+        />
+      </a>
+    </div>
+
+    <div class="row">
+      <button id="refreshBtn" type="button">Odśwież</button>
+
+      <label>
+        <input id="autoRefresh" type="checkbox" />
+        Auto-odświeżanie
+      </label>
+
+      <label>
+        co
+        <input id="intervalSec" type="number" min="5" step="5" value="60" />
+        s
+      </label>
+    </div>
+
+    <div class="hint">
+      Przycisk „Odśwież” przeładowuje oba obrazki z dodaniem parametru czasu (żeby ominąć cache).
+      Auto-odświeżanie robi to samo w pętli.
+    </div>
+  </main>
 
   <script>
-    const REFRESH_MS = 60000; // 1000 ms = 1 sekunda
+    const statusImg = document.getElementById("statusImg");
+    const weatherSticker = document.getElementById("weatherSticker");
 
-    function refreshImage() {
-      const img = document.getElementById('statusImg');
-      const ts = Date.now();
-      // ?ts=... powoduje, że przeglądarka nie używa starej wersji z cache
-      img.src = 'status.png?ts=' + ts;
+    const refreshBtn = document.getElementById("refreshBtn");
+    const autoRefresh = document.getElementById("autoRefresh");
+    const intervalSec = document.getElementById("intervalSec");
+
+    let timerId = null;
+
+    function withCacheBuster(url) {
+      // Usuwa poprzedni cache-buster jeśli był, i dokłada nowy
+      const u = new URL(url, window.location.href);
+      u.searchParams.set("t", Date.now().toString());
+      return u.toString();
     }
 
-    setInterval(refreshImage, REFRESH_MS);
+    function refreshImages() {
+      // status.png (lokalny plik)
+      statusImg.src = withCacheBuster("status.png");
+
+      // sticker (z Weathercloud)
+      weatherSticker.src = withCacheBuster("https://app.weathercloud.net/device/sticker/9916512868");
+    }
+
+    function stopAuto() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }
+
+    function startAuto() {
+      stopAuto();
+      const sec = Math.max(5, Number(intervalSec.value) || 60);
+      timerId = setInterval(refreshImages, sec * 1000);
+    }
+
+    refreshBtn.addEventListener("click", refreshImages);
+
+    autoRefresh.addEventListener("change", () => {
+      if (autoRefresh.checked) startAuto();
+      else stopAuto();
+    });
+
+    intervalSec.addEventListener("change", () => {
+      if (autoRefresh.checked) startAuto();
+    });
+
+    // Opcjonalnie: odśwież raz po starcie
+    refreshImages();
   </script>
 </body>
 </html>
