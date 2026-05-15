@@ -1,12 +1,29 @@
-<html>
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Status urządzenia</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #222; color: #eee; }
+    img { max-width: 90vw; max-height: 90vh; border: 1px solid #555; margin-top: 20px; }
+  </style>
+</head>
 <body>
-  <img id="img" src="status.png?ts=0" style="max-width:100%;">
+  <h1>Status urządzenia</h1>
+  <p>Obraz odświeża się automatycznie co 5 sekund.</p>
+  <img id="statusImg" src="status.png?ts=0" alt="Status urządzenia">
+
   <script>
-    setInterval(() => {
-      const img = document.getElementById('img');
+    const REFRESH_MS = 5000; // 5000 ms = 5 sekund
+
+    function refreshImage() {
+      const img = document.getElementById('statusImg');
       const ts = Date.now();
-      img.src = 'status.png?ts=' + ts; // omija cache, odświeża obraz
-    }, 5000); // zmień 5000 na dowolny interwał w ms
+      // ?ts=... powoduje, że przeglądarka nie używa starej wersji z cache
+      img.src = 'status.png?ts=' + ts;
+    }
+
+    setInterval(refreshImage, REFRESH_MS);
   </script>
 </body>
 </html>
