@@ -10,11 +10,11 @@
 </head>
 <body>
   <h1>Status urządzenia</h1>
-  <p>Obraz odświeża się automatycznie co 5 sekund.</p>
+  <p>Obraz odświeża się automatycznie co 1 minutę.</p>
   <img id="statusImg" src="status.png?ts=0" alt="Status urządzenia">
 
   <script>
-    const REFRESH_MS = 5000; // 5000 ms = 5 sekund
+    const REFRESH_MS = 60000; // 1000 ms = 1 sekunda
 
     function refreshImage() {
       const img = document.getElementById('statusImg');
